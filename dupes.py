@@ -6,6 +6,10 @@ import hashlib
 
 tFolderList = []
 
+totalWasted = []
+
+wasted = {}
+
 
 tPath = "/Users/villan/Desktop/Python/Queue/"
 
@@ -31,12 +35,13 @@ def folder_capture(path):
 
 			result = os.path.join(root, i)
 			md5h = md5hash(result)
+			size = os.stat(result).st_size
+			wasted[result] = size
 			
 			if md5h not in md5dict:
 				md5dict[md5h] = []
 
 			md5dict[md5h].append(result)
-
 
 	if not md5dict:
 		print('\nSource directory not available: ' + path + '\n')
@@ -45,6 +50,14 @@ def folder_capture(path):
 	
 	return md5dict
 
+def slack(passed_hash):
+	slack_total = 0
+
+	for i in range(1, len(passed_hash)):
+		slack_total += wasted[passed_hash[i]]
+		totalWasted.append(slack_total)
+		return int(slack_total) / 1024 / 1024
+
 # TV Folder capture
 
 unique_md5 = folder_capture(tPath)
@@ -52,11 +65,18 @@ unique_md5 = folder_capture(tPath)
 print("")
  
 
-for unique in unique_md5:
-	for unique_dir in range(0, len(unique_md5[unique])):
-		if len(unique_md5[unique]) >= 2:
+for hash_code in unique_md5:
+	for unique_dir in range(0, len(unique_md5[hash_code])):
+		if len(unique_md5[hash_code]) >= 2:
 			if unique_dir == 0:
 				print("")
-			print(unique + ': ' + unique_md5[unique][unique_dir])
 
+			print(hash_code + ': ' + unique_md5[hash_code][unique_dir])
+
+			if unique_dir == len(unique_md5[hash_code]) - 1:
+				print('Wasted Space: ' + str(slack(unique_md5[hash_code])) + 'MB')
+
+print("")
+
+print('Total Waste: ' + str(sum(totalWasted) / 1024 / 1024) + 'MB')
 print("")
